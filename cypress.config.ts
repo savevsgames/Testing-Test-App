@@ -8,4 +8,10 @@ export default defineConfig({
     },
     specPattern: "cypress/component/**/*.cy.{js,ts,jsx,tsx}",
   },
+
+  e2e: {
+    setupNodeEvents(on, config) {
+      // implement node event listeners here
+    },
+  },
 });
