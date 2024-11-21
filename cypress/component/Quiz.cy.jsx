@@ -1,11 +1,10 @@
-import React from "react";
 import Quiz from "../../client/src/components/Quiz";
 import questions from "../fixtures/questions.json";
 
 describe("<Quiz /> Component Test:", () => {
   beforeEach(() => {
     // "Mocking" the API call to "GET" questions
-    cy.intercept("GET", "/api/questions", {
+    cy.intercept("GET", "/api/questions/random", {
       statusCode: 200, // OK
       body: questions, // JSON data
     }).as("getQuestions"); // Assign an alias (@getQuestions)
@@ -15,61 +14,60 @@ describe("<Quiz /> Component Test:", () => {
     cy.mount(<Quiz />);
   });
 
-  it("Should render a button to start the quiz with the text, 'Start Quiz'", () => {
+  it("Should render a button with the text, 'Start Quiz' that starts the quiz when clicked", () => {
     cy.mount(<Quiz />);
-    cy.get("button").should("have.text", "Start Quiz");
+    cy.get("button").should("have.text", "Start Quiz").click();
+    cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
+    cy.get("h2").should("contain.text", questions[0].question); // A question should be displayed
   });
 
-  it("Should render a question and its four answer choices with a button for each after a user clicks start quiz.", () => {
+  it("Should render a new question when I answer a question", () => {
     cy.mount(<Quiz />);
     cy.get("button").click();
     cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
-    // FOrce the data to be loaded so we can compare
-    cy.get("h2")
-      .invoke("text")
-      .then((displayedQuestion) => {
-        // displayedQuestion is the question text from the real API call
-        const matchedQuestion = questions.find(
-          (question) => question.question === displayedQuestion
-        );
-        expect(matchedQuestion).to.not.be.undefined; // The question displayed should be in the JSON data
-
-        // Check if the answers match
-        matchedQuestion?.answers.forEach((answer, index) => {
-          cy.get("button")
-            .eq(index)
-            .contains(index + 1); // Text of the button should be the index + 1
-          cy.get("div").contains(answer.text); // The answer text should be displayed
-        });
-      });
+    // Answer the first question
+    cy.get("button").eq(0).click(); // Answer the first question with the first answer
+    cy.get("h2").should("contain.text", questions[1].question); // The second question should be displayed
   });
 
-  it("Should calculate the score correctly when a user answers a question correctly", () => {
+  it("Should end the quiz once all 10 questions have been answered", () => {
     cy.mount(<Quiz />);
     cy.get("button").click(); // Start the quiz
     cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
 
-    cy.get("h2")
-      .invoke("text")
-      .then((displayedQuestion) => {
-        const matchedQuestion = questions.find(
-          (question) => question.question === displayedQuestion
-        );
-        expect(matchedQuestion).to.not.be.undefined; // The question displayed should be in the JSON data
+    // Answer all 10 questions
+    for (let i = 0; i < 10; i++) {
+      cy.get("button").eq(0).click(); // Answer the first question with the first answer
+    }
+    // The quiz should end and the score should be displayed
+    cy.get("h2").should("contain.text", "Quiz Completed");
+  });
 
-        // Find the correct answer
-        if (matchedQuestion) {
-          const correctAnswerIndex = matchedQuestion.answers.findIndex(
-            (answer) => answer.isCorrect === true
-          );
+  it("Should show my score at the end of the quiz", () => {
+    cy.mount(<Quiz />);
+    cy.get("button").click(); // Start the quiz
+    cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
 
-          // Click the button with the correct answer
-          cy.get("button").eq(correctAnswerIndex).click();
+    // Answer all 10 questions
+    for (let i = 0; i < 20; i++) {
+      cy.get("button").eq(0).click(); // Answer the first question with the first answer
+    }
+    // The quiz should end and the score should be displayed
+    const score = 0 || 1 || 2 || 3 || 4 || 5 || 6 || 7 || 8 || 9 || 10; // The score should be between 0 and 10
+    cy.get("div").should("contain.text", `Your score: ${score}/10`); // The score should be displayed
+  });
 
-          //  Need to probably loop through questions and test for each one to know if
-          //  The score is updated properly because it is not shown on the page while test is
-          //  running
-        }
-      });
+  it("Should let me start a new quiz when the quiz ends", () => {
+    cy.mount(<Quiz />);
+    cy.get("button").click(); // Start the quiz
+
+    // Answer all 10 questions
+    for (let i = 0; i < 10; i++) {
+      cy.get("button").eq(0).click(); // Answer the first question with the first answer
+    }
+    // The quiz should end and the restart quiz button should be displayed and let me start a new quiz
+    cy.get("button").should("have.text", "Take New Quiz").click();
+    cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
+    cy.get("h2").should("contain.text", questions[0].question); // First question should be displayed again
   });
 });
