@@ -59,6 +59,7 @@ const Quiz = () => {
   // We need to expose the state of the current question to Cypress so that it can interact with the quiz
   useEffect(() => {
     if (window.Cypress) {
+      window.__APP_STATE__ = window.__APP_STATE__ || {};
       window.__APP_STATE__.quizState = {
         currentQuestionIndex,
         setCurrentQuestionIndex,
