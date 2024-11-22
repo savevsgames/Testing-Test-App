@@ -1,5 +1,7 @@
 import Quiz from "../../client/src/components/Quiz";
-import questions from "../fixtures/questions.json";
+import fullQuestionJSON from "../fixtures/questions.json";
+
+const questions = fullQuestionJSON.slice(0, 10); // Only use the first 10 questions for testing
 
 describe("<Quiz /> Component Test:", () => {
   // isAnswerCorrect will match the question shown with one in the json
@@ -158,6 +160,15 @@ describe("<Quiz /> Component Test:", () => {
       if (i < 9) {
         // Skipped on the 10th question but until then, the quiz should not end and another question should be displayed
         cy.get("h2").should("exist"); // Makes sure the render is updated
+      } else {
+        cy.window().then((win) => {
+          if (!win.__APP_STATE__) {
+            throw new Error(
+              "`__APP_STATE__` is undefined. Make sure the state is initialized properly in the component."
+            );
+          }
+          win.__APP_STATE__.quizState.setQuizCompleted(true); // Complete the quiz
+        });
       }
     }
     // Set quizCompleted to true
@@ -167,8 +178,6 @@ describe("<Quiz /> Component Test:", () => {
           "`__APP_STATE__` is undefined. Make sure the state is initialized properly in the component."
         );
       }
-      win.__APP_STATE__.quizState.setQuizCompleted(true); // Complete the quiz
-
       cy.log(
         "Current Index:",
         win.__APP_STATE__.quizState.currentQuestionIndex
@@ -178,20 +187,9 @@ describe("<Quiz /> Component Test:", () => {
       cy.log("Incorrect Answers:", incorrectAnswers);
     });
 
-    // The quiz should end and the score should be displayed and have a value between 0 and 10
+    // The quiz should end and the score should be displayed
     cy.get("h2").should("contain.text", "Quiz Completed");
-    const acceptableScores = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // Array of acceptable scores
-    cy.get("div div div")
-      .invoke("text")
-      .then((text) => {
-        const match = text.match(/Your score: (\d+)\/10/);
-        if (match) {
-          const score = parseInt(match[1], 10);
-          expect(acceptableScores).to.include(score); // The score should be one of the acceptable values
-        } else {
-          throw new Error("Score not found in the text");
-        }
-      });
+    cy.get("div div div").should("contain.text", `Your score: ${score}/10`); // The score should
   });
 
   it("Should let me start a new quiz when the quiz ends", () => {

@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 
+import "cypress-axe";
 // import { mount } from "@cypress/react18";
 // ***********************************************
 // This example commands.ts shows you how to
