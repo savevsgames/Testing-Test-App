@@ -15,6 +15,8 @@ declare global {
         setCurrentQuestionIndex: (index: number) => void;
         quizCompleted: boolean;
         setQuizCompleted: (completed: boolean) => void;
+        score: number;
+        setScore: (score: number) => void;
       };
     };
   }

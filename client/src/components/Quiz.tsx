@@ -65,9 +65,11 @@ const Quiz = () => {
         setCurrentQuestionIndex,
         quizCompleted,
         setQuizCompleted,
+        score,
+        setScore,
       };
     }
-  }, [currentQuestionIndex, quizCompleted]);
+  }, [currentQuestionIndex, quizCompleted, score]);
 
   if (!quizStarted) {
     return (
