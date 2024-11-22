@@ -1,4 +1,6 @@
 /// <reference types="cypress" />
+
+// import { mount } from "@cypress/react18";
 // ***********************************************
 // This example commands.ts shows you how to
 // create various custom commands and overwrite
@@ -35,3 +37,14 @@
 //     }
 //   }
 // }
+
+// Register the mount command globally
+// Cypress.Commands.add("mount", mount);
+
+// Example for mounting React components with default options when needed for props/context
+// Cypress.Commands.add('mount', (component, options = {}) => {
+//   return mount(component, {...options});
+// });
+
+// Then in the test
+// cy.mount(<MyComponent />), {props: {questions: mockQuestions}});

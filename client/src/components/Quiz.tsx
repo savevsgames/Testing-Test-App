@@ -1,6 +1,18 @@
-import { useState, } from 'react';
-import type { Question } from '../models/Question.js';
-import { getQuestions } from '../services/questionApi.js';
+import { useState, useEffect } from "react";
+import type { Question } from "../models/Question.js";
+import { getQuestions } from "../services/questionApi.ts";
+
+declare global {
+  interface Window {
+    Cypress?: any;
+    quizState?: {
+      currentQuestionIndex: number;
+      setCurrentQuestionIndex: (index: number) => void;
+      quizCompleted: boolean;
+      setQuizCompleted: (completed: boolean) => void;
+    };
+  }
+}
 
 const Quiz = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -14,7 +26,7 @@ const Quiz = () => {
       const questions = await getQuestions();
 
       if (!questions) {
-        throw new Error('something went wrong!');
+        throw new Error("something went wrong!");
       }
 
       setQuestions(questions);
@@ -44,10 +56,25 @@ const Quiz = () => {
     setCurrentQuestionIndex(0);
   };
 
+  // We need to expose the state of the current question to Cypress so that it can interact with the quiz
+  useEffect(() => {
+    if (window.Cypress) {
+      window.__APP_STATE__.quizState = {
+        currentQuestionIndex,
+        setCurrentQuestionIndex,
+        quizCompleted,
+        setQuizCompleted,
+      };
+    }
+  }, [currentQuestionIndex, quizCompleted]);
+
   if (!quizStarted) {
     return (
       <div className="p-4 text-center">
-        <button className="btn btn-primary d-inline-block mx-auto" onClick={handleStartQuiz}>
+        <button
+          className="btn btn-primary d-inline-block mx-auto"
+          onClick={handleStartQuiz}
+        >
           Start Quiz
         </button>
       </div>
@@ -61,7 +88,10 @@ const Quiz = () => {
         <div className="alert alert-success">
           Your score: {score}/{questions.length}
         </div>
-        <button className="btn btn-primary d-inline-block mx-auto" onClick={handleStartQuiz}>
+        <button
+          className="btn btn-primary d-inline-block mx-auto"
+          onClick={handleStartQuiz}
+        >
           Take New Quiz
         </button>
       </div>
@@ -81,15 +111,22 @@ const Quiz = () => {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className='card p-4'>
+    <div className="card p-4">
       <h2>{currentQuestion.question}</h2>
       <div className="mt-3">
-      {currentQuestion.answers.map((answer, index) => (
-        <div key={index} className="d-flex align-items-center mb-2">
-          <button className="btn btn-primary" onClick={() => handleAnswerClick(answer.isCorrect)}>{index + 1}</button>
-          <div className="alert alert-secondary mb-0 ms-2 flex-grow-1">{answer.text}</div>
-        </div>
-      ))}
+        {currentQuestion.answers.map((answer, index) => (
+          <div key={index} className="d-flex align-items-center mb-2">
+            <button
+              className="btn btn-primary"
+              onClick={() => handleAnswerClick(answer.isCorrect)}
+            >
+              {index + 1}
+            </button>
+            <div className="alert alert-secondary mb-0 ms-2 flex-grow-1">
+              {answer.text}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

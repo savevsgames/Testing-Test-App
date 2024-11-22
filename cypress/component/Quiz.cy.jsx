@@ -37,7 +37,16 @@ describe("<Quiz /> Component Test:", () => {
 
     // Answer all 10 questions
     for (let i = 0; i < 10; i++) {
+      // Test the text exists after each click to ensure that react updates states
+      cy.get("h2").should("exist"); // A question should be displayed
       cy.get("button").eq(0).click(); // Answer the first question with the first answer
+      cy.window()
+        .its("__APP_STATE__.quizState.currentQuestionIndex")
+        .should("equal", i + 1); // Ensure the index increments
+      if (i < 9) {
+        // The quiz should not end yet
+        cy.get("h2").should("exist"); // A question should be displayed
+      }
     }
     // The quiz should end and the score should be displayed
     cy.get("h2").should("contain.text", "Quiz Completed");
@@ -49,8 +58,13 @@ describe("<Quiz /> Component Test:", () => {
     cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
 
     // Answer all 10 questions
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
+      cy.get("h2").should("exist"); // A question should be displayed
       cy.get("button").eq(0).click(); // Answer the first question with the first answer
+      if (i < 9) {
+        // The quiz should not end yet
+        cy.get("h2").should("exist"); // A question should be displayed
+      }
     }
     // The quiz should end and the score should be displayed
     const score = 0 || 1 || 2 || 3 || 4 || 5 || 6 || 7 || 8 || 9 || 10; // The score should be between 0 and 10
@@ -60,14 +74,43 @@ describe("<Quiz /> Component Test:", () => {
   it("Should let me start a new quiz when the quiz ends", () => {
     cy.mount(<Quiz />);
     cy.get("button").click(); // Start the quiz
+    cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
 
     // Answer all 10 questions
     for (let i = 0; i < 10; i++) {
+      cy.get("h2").should("exist"); // A question should be displayed
       cy.get("button").eq(0).click(); // Answer the first question with the first answer
+      if (i < 9) {
+        // The quiz should not end yet
+        cy.get("h2").should("exist"); // A question should be displayed
+      }
     }
     // The quiz should end and the restart quiz button should be displayed and let me start a new quiz
     cy.get("button").should("have.text", "Take New Quiz").click();
     cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
     cy.get("h2").should("contain.text", questions[0].question); // First question should be displayed again
+  });
+
+  it("should track quiz completion state", () => {
+    cy.mount(<Quiz />);
+    cy.get("button").click(); // Start the quiz
+    cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
+    cy.window().then((win) => {
+      expect(win.quizState?.quizCompleted).to.equal(false);
+    });
+
+    // Answer all 10 questions
+    for (let i = 0; i < 10; i++) {
+      cy.get("h2").should("exist"); // A question should be displayed
+      cy.get("button").eq(0).click(); // Answer the first question with the first answer
+      if (i < 9) {
+        // The quiz should not end yet
+        cy.get("h2").should("exist"); // A question should be displayed
+      }
+    }
+    // The quiz should end and the score should be displayed
+    cy.window().then((win) => {
+      expect(win.quizState?.quizCompleted).to.equal(true);
+    });
   });
 });

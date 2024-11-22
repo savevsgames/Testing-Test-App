@@ -1,12 +1,15 @@
 import { defineConfig } from "cypress";
+import viteConfig from "./vite.config";
 
 export default defineConfig({
   component: {
     devServer: {
       framework: "react",
       bundler: "vite",
+      viteConfig,
     },
     specPattern: "cypress/component/**/*.cy.{js,ts,jsx,tsx}",
+    indexHtmlFile: "cypress/support/component-index.html",
   },
 
   e2e: {
