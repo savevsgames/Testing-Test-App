@@ -16,10 +16,15 @@ describe("<Quiz /> Component Test:", () => {
   }
 
   const isAnswerCorrect = (questionIndex: number): boolean => {
+    // Get the question and answers
     const question: Question = questions[questionIndex];
     const answers: Answer[] = question.answers;
-    const correctAnswerIndex: number = answers.findIndex((answer: Answer) => answer.isCorrect === true);
+    // Find the correct answer and the selected answer
+    const correctAnswerIndex: number = answers.findIndex(
+      (answer: Answer) => answer.isCorrect === true
+    );
     const selectedAnswerIndex: number = 0; // Always select the first answer
+    // Compare the selected answer with the correct answer
     return selectedAnswerIndex === correctAnswerIndex;
   };
 
@@ -125,13 +130,18 @@ describe("<Quiz /> Component Test:", () => {
     cy.mount(<Quiz />);
     cy.get("button").click(); // Start the quiz
     cy.wait("@getQuestions"); // Wait for the intercepted API request to resolve
-
+    let score = 0; // Initialize the score
+    let incorrectAnswers = 0; // Initialize the incorrect answers total
     // Answer all 10 questions
     for (let i = 0; i < 10; i++) {
       // Test the text exists after each click to ensure that react updates states
-      cy.get("h2").should("exist"); // A question should be displayed
+      cy.get("h2").should("contain.text", questions[i].question); // A question should be displayed
       cy.get("button").eq(0).click(); // Answer the first question with the first answer
-
+      if (isAnswerCorrect(i)) {
+        score++; // Increment the score if the answer is correct
+      } else {
+        incorrectAnswers++; // Increment the incorrect answers total if the answer is incorrect
+      }
       cy.window().then((win) => {
         if (!win.__APP_STATE__) {
           throw new Error(
@@ -147,7 +157,7 @@ describe("<Quiz /> Component Test:", () => {
 
       if (i < 9) {
         // Skipped on the 10th question but until then, the quiz should not end and another question should be displayed
-        cy.get("h2").should("exist");
+        cy.get("h2").should("exist"); // Makes sure the render is updated
       }
     }
     // Set quizCompleted to true
@@ -164,6 +174,8 @@ describe("<Quiz /> Component Test:", () => {
         win.__APP_STATE__.quizState.currentQuestionIndex
       );
       cy.log("Quiz Completed:", win.__APP_STATE__.quizState.quizCompleted);
+      cy.log("Score:", score);
+      cy.log("Incorrect Answers:", incorrectAnswers);
     });
 
     // The quiz should end and the score should be displayed and have a value between 0 and 10
