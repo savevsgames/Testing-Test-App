@@ -1,4 +1,5 @@
 import questions from "../fixtures/questions.json";
+import "cypress-real-events/support";
 
 describe("Quiz End to End Testing:", () => {
   beforeEach(() => {
@@ -96,25 +97,45 @@ describe("Error Handling Tests: ", () => {
 });
 
 describe("Accessibility Tests: ", () => {
-  it("Should allow navigation via keyboard", () => {
+  beforeEach(() => {
+    // "Mocking" the API call to "GET" => api/questions/random
+    cy.intercept("GET", "/api/questions/random", {
+      statusCode: 200, // OK
+      body: questions, // JSON data
+    }).as("getQuestions"); // Assign an alias (@getQuestions)
     cy.visit("http://127.0.0.1:3001/");
-    cy.get("button").focus().type("{enter}"); // Focus the Start Quiz button & Simulate pressing Enter
+  });
+
+  it("Should allow navigation via keyboard", () => {
+    cy.get("button").focus().should("be.focused").realPress("Enter"); // Simulate pressing Enter
     cy.wait("@getQuestions");
 
-    cy.get("button").eq(0).focus().type("{enter}"); // Focus the first answer button & Simulate pressing Enter to answer
+    cy.get("button").eq(0).focus().should("be.focused").realPress("Enter"); // Simulate pressing Enter
     cy.get("h2").should("exist"); // Verify the next question is displayed
   });
+
+  // The next two test fail and indicate that the page is not syntactically correct
+  // a11y error!landmark-one-main on 1 Node
+  // a11y error!page-has-heading-one on 1 Node
+  // a11y error!region on 5 Nodes
+  // assert3 accessibility violations were detected: expected 3 to equal 0
+  
+  // - Recommendations to front-end developers:
+  // 1. Ensure that the page has a <main> element.
+  // 2. Ensure that the page has an h1 heading.
+  // 3. Ensure that the page has semantic regions defined by ARIA "landmarks".
 
   it("Should have no accessibility violations on load", () => {
     cy.visit("http://127.0.0.1:3001/");
     cy.injectAxe(); // Inject axe-core into the page
-    cy.checkA11y(); // Run axe-core checks
+
+    // Run axe-core checks and log violations
+    cy.checkA11y();
   });
 
   it("Should have no accessibility violations after starting the quiz", () => {
-    cy.visit("http://127.0.0.1:3001/");
     cy.injectAxe(); // Inject axe-core into the page
-    cy.get("button").click(); // Start the quiz
+    cy.get(".container div div button").click(); // Start the quiz
     cy.wait("@getQuestions");
 
     cy.checkA11y(); // Check accessibility after the DOM updates
